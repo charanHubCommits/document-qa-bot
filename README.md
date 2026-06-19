@@ -4,7 +4,7 @@ An intelligent, context-grounded Retrieval-Augmented Generation (RAG) assistant 
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 This project leverages the following libraries, tools, and platforms:
 
@@ -19,7 +19,7 @@ This project leverages the following libraries, tools, and platforms:
 
 ---
 
-## 📐 Architecture Overview
+## Architecture Overview
 
 The system runs a classic Retrieval-Augmented Generation (RAG) pipeline consisting of an ingestion workflow and a querying workflow.
 
@@ -42,7 +42,7 @@ Below is the system architecture diagram showing the components of this pipeline
 
 ---
 
-## 🧩 Chunking Strategy
+## Chunking Strategy
 
 ### The Chosen Strategy
 The pipeline implements a **Fixed-size Character Chunking with Overlap** strategy.
@@ -56,7 +56,7 @@ The pipeline implements a **Fixed-size Character Chunking with Overlap** strateg
 
 ---
 
-## 🗃️ Embedding Model & Vector Database
+## Embedding Model & Vector Database
 
 ### Embedding Model:
 - **Model**: `models/text-embedding-004` (with fallback to `models/gemini-embedding-001`).
@@ -71,7 +71,7 @@ The pipeline implements a **Fixed-size Character Chunking with Overlap** strateg
 
 ---
 
-## 🚀 Setup Instructions
+## Setup Instructions
 
 Follow these step-by-step instructions to clone, install, and run the bot locally.
 
@@ -144,7 +144,7 @@ print(result["sources"])
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
 The application reads configurations and API keys from a `.env` file in the project root. Create a `.env` file containing the following properties:
 
@@ -158,12 +158,9 @@ The application reads configurations and API keys from a `.env` file in the proj
 | `EMBEDDING_MODEL` | No | Model name used for semantic embeddings. | `models/gemini-embedding-001` |
 | `GENERATION_MODEL` | No | Model name used to generate the final response. | `gemini-2.5-flash` |
 
-> [!WARNING]
-> **Security Reminder**: Never commit your `.env` file or hardcode your API keys. The `.env` file is already listed in `.gitignore`.
-
 ---
 
-## ❓ Example Queries
+## Example Queries
 
 Below are five sample queries based on the default dataset, along with their expected answer themes:
 
@@ -194,7 +191,7 @@ Below are five sample queries based on the default dataset, along with their exp
 
 ---
 
-## ⚠️ Known Limitations
+## Known Limitations
 
 1. **Strict Context Constraints (No General Knowledge)**:
    The bot is strictly instructed to answer *only* using retrieved document context. If a user asks a general question (e.g., "What is the capital of France?"), the bot will reply with a variation of: *"I am sorry, but the provided documents do not contain the answer to your question."*
