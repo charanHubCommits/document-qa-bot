@@ -182,16 +182,11 @@ def ingest_documents(data_dir: Path = DATA_DIR) -> int:
             f"Add PDF or DOCX files before running ingest."
         )
 
-    # Reset existing collection if it exists to clean up old files.
-    # We delete the collection instead of deleting the DB_DIR directory
-    # to avoid SQLite readonly database errors (SQLITE_READONLY_DBMOVED, code 1032)
-    # when the database is accessed concurrently by a running application thread.
     DB_DIR.mkdir(parents=True, exist_ok=True)
     client = chromadb.PersistentClient(path=str(DB_DIR))
     try:
         client.delete_collection(COLLECTION_NAME)
     except Exception:
-        # Collection might not exist yet
         pass
 
     pages = []
