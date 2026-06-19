@@ -10,7 +10,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
 DATA_DIR = ROOT_DIR / "data"
 DB_DIR = ROOT_DIR / "db"
-COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "documents")
+COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "document_knowledge_base")
 
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "800"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
