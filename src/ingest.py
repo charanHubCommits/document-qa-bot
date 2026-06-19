@@ -20,7 +20,6 @@ from src.config import (
     SUPPORTED_EXTENSIONS,
 )
 
-# Load environment variables
 ROOT_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT_DIR / ".env")
 
@@ -41,7 +40,7 @@ class GoogleGenerativeAiEmbeddingFunction(chromadb.EmbeddingFunction):
         self.model_name = model_name
         genai.configure(api_key=self.api_key)
 
-        # Validate model availability and fallback if necessary
+        # model availability check
         try:
             genai.embed_content(
                 model=self.model_name,
@@ -49,7 +48,6 @@ class GoogleGenerativeAiEmbeddingFunction(chromadb.EmbeddingFunction):
                 task_type="retrieval_document"
             )
         except Exception:
-            # Fallback to the environment-supported model
             self.model_name = "models/gemini-embedding-001"
 
     def __call__(self, input: Documents) -> Embeddings:
@@ -126,11 +124,8 @@ def chunk_extracted_pages(pages: list[dict], chunk_size: int = 1000, chunk_overl
         text_length = len(text)
 
         while start < text_length:
-            # Determine end point
             end = min(start + chunk_size, text_length)
             chunk_text = text[start:end]
-
-            # Store chunk content alongside original page-level metadata
             chunks.append({
                 "text": chunk_text,
                 "metadata": {
@@ -140,7 +135,6 @@ def chunk_extracted_pages(pages: list[dict], chunk_size: int = 1000, chunk_overl
                 }
             })
 
-            # Slide window forward by (chunk_size - chunk_overlap)
             start += (chunk_size - chunk_overlap)
 
     return chunks
@@ -150,29 +144,25 @@ def save_to_vector_db(chunks: list[dict], db_path: str = str(DB_DIR)):
     """
     Embeds text chunks and saves them into a persistent disk-based ChromaDB.
     """
-    # Create persistent ChromaDB client
+    # chroma db client
     client = chromadb.PersistentClient(path=db_path)
 
-    # Initialize the Gemini embedding function
     embedding_fn = GoogleGenerativeAiEmbeddingFunction(
         api_key=api_key,
         model_name="models/text-embedding-004"
     )
 
-    # Create or fetch collection (default collection name aligned in config)
     collection = client.get_or_create_collection(
         name=COLLECTION_NAME,
         embedding_function=embedding_fn,
         metadata={"hnsw:space": "cosine"} # Use Cosine Distance
     )
 
-    # Prepare batch data
+    # batch data
     ids = [f"id_{i}_{uuid.uuid4().hex[:6]}" for i in range(len(chunks))]
     documents = [chunk["text"] for chunk in chunks]
     metadatas = [chunk["metadata"] for chunk in chunks]
 
-    # Batch upload to ChromaDB
-    # ChromaDB automatically handles embedding generation via the custom embedding function
     collection.add(
         ids=ids,
         documents=documents,
@@ -192,10 +182,17 @@ def ingest_documents(data_dir: Path = DATA_DIR) -> int:
             f"Add PDF or DOCX files before running ingest."
         )
 
-    # Reset existing database directory if it exists to clean up old files
-    if DB_DIR.exists():
-        shutil.rmtree(DB_DIR)
+    # Reset existing collection if it exists to clean up old files.
+    # We delete the collection instead of deleting the DB_DIR directory
+    # to avoid SQLite readonly database errors (SQLITE_READONLY_DBMOVED, code 1032)
+    # when the database is accessed concurrently by a running application thread.
     DB_DIR.mkdir(parents=True, exist_ok=True)
+    client = chromadb.PersistentClient(path=str(DB_DIR))
+    try:
+        client.delete_collection(COLLECTION_NAME)
+    except Exception:
+        # Collection might not exist yet
+        pass
 
     pages = []
     for document_path in documents:
@@ -213,10 +210,8 @@ def ingest_documents(data_dir: Path = DATA_DIR) -> int:
     if not pages:
         raise ValueError("No text was extracted from the documents in data/.")
 
-    # Call the template chunker
     chunks = chunk_extracted_pages(pages, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
 
-    # Save to Vector Database using the template method
     save_to_vector_db(chunks, db_path=str(DB_DIR))
 
     return len(chunks)
