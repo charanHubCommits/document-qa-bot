@@ -4,7 +4,6 @@ import chromadb
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Ensure we can load variables from .env
 ROOT_DIR = Path(__file__).resolve().parent
 load_dotenv(ROOT_DIR / ".env")
 
@@ -12,7 +11,7 @@ from src.ingest import ingest_documents, discover_documents
 from src.query import query_rag_pipeline
 from src.config import TOP_K, DATA_DIR, DB_DIR, COLLECTION_NAME
 
-# Set page configuration
+# Page configuration
 st.set_page_config(
     page_title="Grounded Q&A Assistant",
     page_icon="🤖",
@@ -20,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for modern premium dark mode design
+# CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -86,7 +85,7 @@ html, body, [class*="css"], .stApp {
 </style>
 """, unsafe_allow_html=True)
 
-# Helper function to check if the database actually exists and contains documents
+# DB check
 def get_db_document_count() -> int:
     if not DB_DIR.exists():
         return 0
@@ -97,11 +96,10 @@ def get_db_document_count() -> int:
     except Exception:
         return 0
 
-# Initialize Session State
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Page Title Header Component
 st.markdown(
     """
     <div style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 25px;">
@@ -112,18 +110,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Sidebar Layout
+
 with st.sidebar:
     st.markdown("### ⚙️ Control Dashboard")
     st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
-    # TOP_K slider hyperparameter
     top_k = st.slider("Retrieval Size (TOP_K)", min_value=1, max_value=10, value=TOP_K, step=1)
     
     st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
     st.markdown("### 📁 Document Library")
-    
-    # Show available documents
+
     docs = discover_documents()
     if not docs:
         st.warning("No files found in the data/ directory. Place PDF or DOCX files here.")
@@ -140,7 +136,6 @@ with st.sidebar:
             
     st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
     
-    # Ingestion triggered button
     if st.button("🔄 Re-ingest Documents"):
         with st.spinner("Processing document library..."):
             try:
@@ -150,14 +145,11 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"Ingestion failed: {e}")
 
-    # Display database info
     db_docs = get_db_document_count()
     st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
     st.caption(f"Vector Database status: **{db_docs} chunks stored**")
 
 
-# Main chat display
-# Check database state first
 db_ready = get_db_document_count() > 0
 
 if not db_ready:
@@ -183,14 +175,11 @@ else:
                             unsafe_allow_html=True
                         )
 
-    # Chat Input handler
     if user_query := st.chat_input("Ask a question about your documents..."):
-        # Display user message
         with st.chat_message("user"):
             st.markdown(user_query)
         st.session_state.messages.append({"role": "user", "content": user_query})
 
-        # Process and generate answer
         with st.chat_message("assistant"):
             answer_placeholder = st.empty()
             with st.spinner("Searching documents & generating answer..."):
@@ -199,7 +188,6 @@ else:
                     answer = result["answer"]
                     sources = result["sources"]
 
-                    # Display response
                     answer_placeholder.markdown(answer)
                     
                     if sources:
@@ -218,7 +206,6 @@ else:
                                     unsafe_allow_html=True
                                 )
 
-                    # Append to session state
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": answer,
